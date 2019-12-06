@@ -33,7 +33,7 @@ def make_ellipses(gmm, ax, k):
 
 
 #start
-data = pd.read_excel(r'/home/jiang/桌面/GMM/客户年消费数据.xlsx')
+data = pd.read_excel(r'D:\\01 Learning\\git_repository\\Python\\Python_Programs\\GMM\\客户年消费数据.xlsx')
 print('各字段缺失情况：\n', data.isnull().sum())
 
 # 六种商品年消费额分布图
@@ -78,7 +78,7 @@ plt.xlabel('pca_1')
 plt.ylabel('pca_2')
 plt.show()
 
-#print('前两个主成分包含的信息百分比：{:.2%}'.format(np.sum(eigVals[:2])/np.sum(eigVals)))
+print('前两个主成分包含的信息百分比：{:.2%}'.format(np.sum(eigVals[:2])/np.sum(eigVals)))
 
 
 score_kmean = []
@@ -106,4 +106,35 @@ for i, k in zip([0, 2, 4, 6], n_cluster):
     make_ellipses(gmm, ax, k)
     if i == 6:
         plt.xlabel('GMM')
+plt.show()
+
+# 聚类类别从2到11，统计两种聚类模型的silhouette_score，分别保存在列表score_kmean 和score_gmm 
+score_kmean = []
+score_gmm = []
+random_state = 87
+n_cluster = np.arange(2, 12)
+for k in n_cluster:
+    # K-means聚类
+    kmeans = KMeans(n_clusters=k, random_state=random_state)
+    cluster1 = kmeans.fit_predict(pca_data)
+    score_kmean.append(silhouette_score(pca_data, cluster1))
+    # gmm聚类
+    gmm = GaussianMixture(n_components=k, covariance_type='spherical', random_state=random_state)
+    cluster2 = gmm.fit(pca_data).predict(pca_data)
+    score_gmm.append(silhouette_score(pca_data, cluster2))
+
+# 得分变化对比图
+sil_score = pd.DataFrame({'k': np.arange(2, 12),
+                          'score_kmean': score_kmean,
+                          'score_gmm': score_gmm})
+# K-means和GMM得分对比
+plt.figure(figsize=(10, 6))
+plt.bar(sil_score['k']-0.15, sil_score['score_kmean'], width=0.3,
+        facecolor='blue', label='Kmeans_score')
+plt.bar(sil_score['k']+0.15, sil_score['score_gmm'], width=0.3,
+        facecolor='green', label='GMM_score')
+plt.xticks(np.arange(2, 12))
+plt.legend(fontsize=16)
+plt.ylabel('silhouette_score', fontsize=16)
+plt.xlabel('k')
 plt.show()
